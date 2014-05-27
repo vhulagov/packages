@@ -1,0 +1,1 @@
+cmd_/home/lacitis/LINUX/SRC/ubuntu-trusty/drivers/edac/sb_edac.ko := ld -r -m elf_x86_64 -T /usr/src/linux-headers-3.11.0-14-generic/scripts/module-common.lds --build-id  -o /home/lacitis/LINUX/SRC/ubuntu-trusty/drivers/edac/sb_edac.ko /home/lacitis/LINUX/SRC/ubuntu-trusty/drivers/edac/sb_edac.o /home/lacitis/LINUX/SRC/ubuntu-trusty/drivers/edac/sb_edac.mod.o

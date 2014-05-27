@@ -1,0 +1,11 @@
+Package: kernel-modules-sb-edac
+Version: 1.1.0
+Architecture: all
+Maintainer: Hulagov Vladimir <lacitis@yandex-team.ru>
+Installed-Size: 994
+Depends: dkms (>= 1.95)
+Section: misc
+Priority: optional
+Description: Intel Sandy Bridge and Ivy Bridge -EN/-EP/-EX Memory Controller
+ kernel module. This driver supports the memory controllers found on the Intel
+ processor family Sandy Bridge and Ivy Bridge.

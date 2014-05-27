@@ -1,0 +1,194 @@
+#!/bin/sh -e
+
+SAVED_TRAPS="$(trap)"
+
+selparce_sigstop()
+{
+	set +x
+	set +e
+
+	eval "$SAVED_TRAPS"
+
+	trap - USR1 KILL TERM EXIT QUIT INT 
+	exit
+}
+
+trap selparce_sigstop USR1 KILL TERM EXIT QUIT INT 
+
+ID=
+TIME=
+DATA=
+RECORD=
+SENSOR=
+
+USER=ADMIN
+PASS=ADMIN
+HOST=
+
+TEMP=`getopt -o u:p:h:i: --long USER:,PASS:,HOST:,IPMI: -n "getsel" -- "$@" || exit 0 1>&2`
+
+eval set -- "$TEMP"
+
+while :; do
+	case "$1" in
+	-u|--user) shift
+		export USER="$1"
+		;;	
+	-p|--password) shift
+		export PASS="$1"
+		;;	
+	-h|--hostname) shift
+		export HOST="$1"
+		;;	
+	-i|--IPMI) shift
+		export IPMI="$1"
+		;;	
+	--) shift
+		break
+		;;	
+	*)	
+		exit 1
+		;;
+	esac
+	shift
+done
+
+[ -n "$IPMI" ] || IPMI="$HOST.ipmi.yandex-team.ru"
+
+# Skip Chassis intrusion, CPU Temperature events, Voltage, OS events, non-critical Memory ECC events
+ipmitool -U $USER -P $PASS -H $IPMI sel list 2>/dev/null |
+grep -E -v '(Reserved|Chassis|OEM #0x0[12]|Temperature|Fan|Voltage|Power Supply|OS Boot|OS Stop|OEM record d[cd]|Unknown #0xd[24]|Read ECC|Presence Detected|Watchdog|Timestamp Clock|System Boot|Boot Error|Drive Present|System ACPI|Slot/Connector|Button|Processor|No video device selected|Event Logging Disabled)' | sort -k6 -r | uniq -f5 | 
+while read ID foo; do
+eval `ipmitool -U $USER -P $PASS \
+	-H $IPMI sel get 0x$ID | awk '
+	/Record Type/ { print "RECORD=" $4 "; " }
+	/Timestamp/ { print "TIME=\"" $3, $4 "\"; " }
+	/Sensor Number/ { print "SENSOR=" $4 "; " }
+	/Event Data/ { print "DATA=" $4 "; " }
+	/Event Data \(RAW\)/ { print "DATA=" $5 "; " }'`
+
+	# Process DATA
+	WHAT="Errors in memory module"
+
+	case "$SENSOR" in
+	# Supermicro
+	00)
+			case ${DATA%[0-4a-d][0-4a-d]8[01]} in
+			0[01]) DATA=${DATA%??}; DIMM=${DATA#??}; CPU=${DATA%??}
+							#WHAT="${WHAT}${CPU#?} (from 0)"
+							d="DIMM_$(printf $DIMM | tr '[[:lower:]]' '[[:upper:]]')" ;;
+
+			a[01])
+					CPU=${DATA#${DATA%?}}; DIMM=${DATA%??}; DIMM=${DIMM#??}
+					#WHAT="${WHAT}$CPU (from 0)"
+					if [ "$CPU" = "0" ];
+							 then d="DIMM_$(printf $DIMM | tr 'ab1234' '12ABCD')";
+							 else d="DIMM_$(printf $DIMM | tr 'ab1234' '12EFGH')";
+					fi ;;
+
+			050018) WHAT="PCI SERR" d="($DATA)" ;;
+			a3ffff) WHAT="" ;; # `Pre-Init Time-stamp' #TODO SEL clock needs to be set. 
+
+			esac
+			;;
+
+	08|09)
+	# GIGABYTE
+			WHAT="Errors in memory channel"
+			case ${DATA#${DATA%??}} in
+				00) d="A (DDR3_P0_A*)" ;;
+				01) d="A (DDR3_P0_A0, DDR3_P0_A1)" ;;
+				10) d="B (DDR3_P0_B*)" ;;
+				11) d="B (DDR3_P0_B0, DDR3_P0_B1)" ;;
+				20) d="C (DDR3_P0_C*)" ;;
+				21) d="C (DDR3_P0_C0, DDR3_P0_C1)" ;;
+				30) d="D (DDR3_P0_D*)" ;;
+				31) d="D (DDR3_P0_D0, DDR3_P0_D1)" ;;
+
+				40) d="E (DDR3_P0_E*)" ;;
+				50) d="F (DDR3_P0_F*)" ;;
+				60) d="G (DDR3_P0_G*)" ;;
+				70) d="H (DDR3_P0_H*)" ;;
+			esac
+			;;
+
+	aa) 	
+			printf "'Memory Error - !rare case! call to lacitis@'\n"
+			d="($DATA)" r='Uncorrectable ECC'
+			;;
+
+	# ASUS
+	d1|d2)
+			case "${DATA#31ff}" in
+			00) d="DIMM_A1" ;; 01) d="DIMM_A2" ;;
+			02) d="DIMM_A3" ;; 03) d="DIMM_A4" ;;
+			04) d="DIMM_B1" ;; 05) d="DIMM_B2" ;;
+			06) d="DIMM_B3" ;; 07) d="DIMM_B4" ;;
+			08) d="DIMM_C1" ;; 09) d="DIMM_C2" ;;
+			0a) d="DIMM_C3" ;; 0b) d="DIMM_C4" ;;
+			0c) d="DIMM_D1" ;; 0d) d="DIMM_D2" ;;
+			0e) d="DIMM_D3" ;; 0f) d="DIMM_D4" ;;
+			esac
+			;;
+	d3|d4)
+			case "${DATA#31ff}" in
+			00) d="DIMM_D1" ;; 01) d="DIMM_D2" ;;
+			02) d="DIMM_D3" ;; 03) d="DIMM_D4" ;;
+			04) d="DIMM_E1" ;; 05) d="DIMM_E2" ;;
+			06) d="DIMM_E3" ;; 07) d="DIMM_E4" ;;
+			08) d="DIMM_F1" ;; 09) d="DIMM_F2" ;;
+			0a) d="DIMM_F3" ;; 0b) d="DIMM_F4" ;;
+			0c) d="DIMM_G1" ;; 0d) d="DIMM_G2" ;;
+			0e) d="DIMM_G3" ;; 0f) d="DIMM_G4" ;;
+			10) d="DIMM_H1" ;; 11) d="DIMM_H2" ;;
+			12) d="DIMM_H3" ;; 13) d="DIMM_H4" ;;
+			14) d="DIMM_C1" ;; 15) d="DIMM_C2" ;;
+			16) d="DIMM_C3" ;; 17) d="DIMM_C4" ;;
+			ff) d="Unknown DIMM" ;;
+			esac
+			;;
+	# HP?
+	[ef][0-a])
+			printf "'Memory Error - !rare case! call to lacitis@'\n"
+			WHAT="Memory PROC1"
+			[ "${SENSOR##e}" = "$SENSOR" ] || WHAT="Memory PROC2"
+			d="DIMM$((${SENSOR#[ef]}+1))"
+			;;
+
+	ff)
+			disk=${DATA#a0}
+			case "${disk%ff}" in
+			0[0-3]) WHAT=Disk d="${disk%ff}" ;;
+			esac
+			;;
+	esac
+
+	case "$SENSOR" in
+	00|d1|d3)
+			case "$RECORD" in
+			01) r='Correctable ECC' ;;
+			02) r='Uncorrectable ECC' ;;
+			40) r='Presence detected' ;;
+			esac
+			;;
+	d2|d4)
+			case "$RECORD" in
+			01) r='Read ECC error' ;;
+			02) r='ECC Error occurred on a scrub' ;;
+			04) r='Write Parity Error' ;;
+			08) r='Error in Redundant memory' ;;
+			10) r='Sparing Error' ;;
+			20) r='Memory access out of Range' ;;
+			40) r='Address Parity Error' ;;
+			80) r='Byte Enable Parity' ;;
+			esac
+			;;
+	[ef][0-a])
+			case "$RECORD" in
+			02) r='Configuration error'
+			esac
+			;;
+	esac
+
+	[ -z "$WHAT" ] || printf "$ID | $TIME | $WHAT $d | $r\n"
+done

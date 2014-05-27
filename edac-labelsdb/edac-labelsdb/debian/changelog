@@ -1,0 +1,17 @@
+edac-labelsdb (0.1-2) unstable; urgency=low
+
+  * Add X9DRFF map
+
+ -- Hulagov Vladimir <lacitis@yandex-team.ru>  Tue, 08 Apr 2014 14:22:58 +0400
+
+edac-labelsdb (0.1-1) unstable; urgency=low
+
+  * first build
+
+ -- Hulagov Vladimir <lacitis@yandex-team.ru>  Tue, 01 Oct 2013 19:48:31 +0400
+
+edac-labelsdb (0.1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Hulagov Vladimir <lacitis@yandex-team.ru>  Tue, 01 Oct 2013 19:29:30 +0400

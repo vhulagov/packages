@@ -1,0 +1,16 @@
+Source: kernel-modules-sb-edac
+Section: misc
+Priority: optional
+Maintainer: Hulagov Vladimir <lacitis@yandex-team.ru>
+Build-Depends: debhelper (>= 8.0.0), bzip2
+Standards-Version: 3.9.4
+
+#Vcs-Git: git://git.debian.org/collab-maint/sbedac.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/sbedac.git;a=summary
+
+Package: kernel-modules-sb-edac
+Architecture: all
+Depends: dkms (>= 1.95), ${misc:Depends}
+Description: Intel Sandy Bridge and Ivy Bridge -EN/-EP/-EX Memory Controller
+ kernel module. This driver supports the memory controllers found on the Intel 
+ processor family Sandy Bridge and Ivy Bridge.

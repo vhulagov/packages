@@ -1,0 +1,5 @@
+kernel-modules-sb-edac (1.1.0) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Hulagov Vladimir <lacitis@yandex-team.ru>  Mon, 03 Mar 2014 10:58:13 +0400

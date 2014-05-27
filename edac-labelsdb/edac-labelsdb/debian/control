@@ -1,0 +1,17 @@
+Source: edac-labelsdb
+Priority: extra
+Maintainer: Hulagov Vladimir <lacitis@yandex-team.ru>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.4
+Section: libs
+Homepage: https://github.yandex-team.ru/lacitis/HEDT/blob/master/initrd/etc/edac/labels.db
+
+Package: edac-labelsdb
+Section: libs
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, linux-generic (>= 3.5) | linux-generic-lts-saucy | linux-generic-lts-raring | linux-generic-lts-quantal, edac-utils|rasdaemon
+Replaces: edac-utils
+Description: EDAC Motherboard DIMM labels Database file
+ This db-file used by edac-utils and rasdaemon to show vendor-specific names of dimm slots.
+ Vendor-name and model-name are found from dmidecode output
+ Labels are taken from the silk screen on the motherboard.

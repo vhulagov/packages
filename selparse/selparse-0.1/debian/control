@@ -1,0 +1,14 @@
+Source: selparse
+Priority: extra
+Maintainer: Hulagov Vladimir <lacitis@yandex-team.ru>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.4
+Homepage: https://github.yandex-team.ru/lacitis/selparse
+
+Package: selparse
+Section: universe/utils
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ipmitool
+Description: IPMI SEL data parser for memory incidents
+ This script provide the way to get vendor-specific names 
+ of dimm slots from IPMI System Event Log hexademical data.
